@@ -122,4 +122,25 @@ class User_model extends CI_Model {
 		
 	}
 	
+	public function show($id = 0)
+	{
+        if(!empty($id)){
+            $query = $this->db->get_where("products", ['id' => $id])->row_array();
+        }else{
+            $query = $this->db->get("products")->result();
+        }
+        return $query;
+	}
+      
+    /**
+     * INSERT | POST method.
+     *
+     * @return Response
+    */
+    public function insert($data)
+    {
+        $this->db->insert('products',$data);
+        return $this->db->insert_id(); 
+    } 
+     
 }

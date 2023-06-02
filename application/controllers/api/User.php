@@ -1,57 +1,19 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/* On your database, open a SQL terminal paste this and execute: */
-// CREATE TABLE IF NOT EXISTS `users` (
-//   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-//   `username` varchar(255) NOT NULL DEFAULT '',
-//   `email` varchar(255) NOT NULL DEFAULT '',
-//   `password` varchar(255) NOT NULL DEFAULT '',
-//   `avatar` varchar(255) DEFAULT 'default.jpg',
-//   `created_at` datetime NOT NULL,
-//   `updated_at` datetime DEFAULT NULL,
-//   `is_admin` tinyint(1) unsigned NOT NULL DEFAULT '0',
-//   `is_confirmed` tinyint(1) unsigned NOT NULL DEFAULT '0',
-//   `is_deleted` tinyint(1) unsigned NOT NULL DEFAULT '0',
-//   PRIMARY KEY (`id`)
-// );
-// CREATE TABLE IF NOT EXISTS `ci_sessions` (
-//   `id` varchar(40) NOT NULL,
-//   `ip_address` varchar(45) NOT NULL,
-//   `timestamp` int(10) unsigned DEFAULT 0 NOT NULL,
-//   `data` blob NOT NULL,
-//   PRIMARY KEY (id),
-//   KEY `ci_sessions_timestamp` (`timestamp`)
-// );
-
-/**
- * User class.
- * 
- * @extends REST_Controller
- */
     require(APPPATH.'/libraries/REST_Controller.php');
     use Restserver\Libraries\REST_Controller;
 
 class User extends REST_Controller {
 
-	/**
-	 * __construct function.
-	 * 
-	 * @access public
-	 * @return void
-	 */
+
 	public function __construct() {
 		parent::__construct();
         $this->load->library('Authorization_Token');
 		$this->load->model('user_model');
 	}
+	
 
-	/**
-	 * register function.
-	 * 
-	 * @access public
-	 * @return void
-	 */
 	public function register_post() {
 
 		// set validation rules
@@ -97,12 +59,7 @@ class User extends REST_Controller {
 		
 	}
 		
-	/**
-	 * login function.
-	 * 
-	 * @access public
-	 * @return void
-	 */
+	
 	public function login_post() {
 		
 		// set validation rules
@@ -137,7 +94,8 @@ class User extends REST_Controller {
                 $token_data['username'] = $user->username; 
                 $tokenData = $this->authorization_token->generateToken($token_data);
                 $final = array();
-                $final['access_token'] = $tokenData;
+                $final['access_token'] = $tokenData;				
+			//	$final['exp']=time() + 600;
                 $final['status'] = true;
                 $final['message'] = 'Login success!';
                 $final['note'] = 'You are now logged in.';
@@ -155,12 +113,7 @@ class User extends REST_Controller {
 		
 	}
 	
-	/**
-	 * logout function.
-	 * 
-	 * @access public
-	 * @return void
-	 */
+	
 	public function logout_post() {
 
 		if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
@@ -182,5 +135,52 @@ class User extends REST_Controller {
 		}
 		
 	}
+
+	public function index_get($id = 0)
+	{
+        $headers = $this->input->request_headers(); 
+        if (isset($headers['Authorization']) && isset($_SESSION['logged_in'])) {
+            $decodedToken = $this->authorization_token->validateToken($headers['Authorization']);
+            if ($decodedToken['status'])
+            {
+                // ------- Main Logic part -------
+                if(!empty($id)){
+                    $data = $this->user_model->show($id);
+                } else {
+                    $data = $this->user_model->show();
+                }
+                $this->response($data, REST_Controller::HTTP_OK);
+                // ------------- End -------------
+            } 
+            else {
+                $this->response($decodedToken);
+            }
+        } else {
+            $this->response(['Authentication failed'], REST_Controller::HTTP_OK);
+        }
+	}
+
+	public function index_post()
+    {
+        $headers = $this->input->request_headers(); 
+		if (isset($headers['Authorization'])) {
+			$decodedToken = $this->authorization_token->validateToken($headers['Authorization']);
+            if ($decodedToken['status'])
+            {
+                // ------- Main Logic part -------
+                $input = $this->input->post();
+                $data = $this->user_model->insert($input);
+        
+                $this->response(['Product created successfully.'], REST_Controller::HTTP_OK);
+                // ------------- End -------------
+            }
+            else {
+                $this->response($decodedToken);
+            }
+		}
+		else {
+			$this->response(['Authentication failed'], REST_Controller::HTTP_OK);
+		}
+    } 
 	
 }

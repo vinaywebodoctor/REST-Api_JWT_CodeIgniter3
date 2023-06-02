@@ -94,6 +94,7 @@ class Authorization_Token
          * Authorization Header Exists
          */
         $token_data = $this->tokenIsExist($headers);
+        
         if($token_data['status'] === TRUE)
         {
             try
@@ -111,6 +112,7 @@ class Authorization_Token
                 if(!empty($token_decode) AND is_object($token_decode))
                 {
                     // Check Token API Time [API_TIME]
+                   
                     if (empty($token_decode->API_TIME OR !is_numeric($token_decode->API_TIME))) {
                         
                         return ['status' => FALSE, 'message' => 'Token Time Not Define!'];
